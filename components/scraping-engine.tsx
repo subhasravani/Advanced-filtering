@@ -46,24 +46,45 @@ export default function ScrapingEngine() {
   const [newJob, setNewJob] = useState({
     name: "",
     urls: "",
-    selectors: {
-      companyName: "",
-      description: "",
-      employees: "",
-      revenue: "",
-      contact: "",
+    strategy: "intelligent",
+    dataFields: {
+      companyName: { enabled: true, selector: "", required: true },
+      industry: { enabled: true, selector: "", required: false },
+      description: { enabled: true, selector: "", required: false },
+      employees: { enabled: true, selector: "", required: false },
+      revenue: { enabled: true, selector: "", required: false },
+      location: { enabled: true, selector: "", required: false },
+      website: { enabled: true, selector: "", required: false },
+      contactEmail: { enabled: true, selector: "", required: false },
+      contactPhone: { enabled: false, selector: "", required: false },
+      foundingYear: { enabled: false, selector: "", required: false },
+      technologies: { enabled: false, selector: "", required: false },
+      socialMedia: { enabled: false, selector: "", required: false },
+      customField1: { enabled: false, selector: "", required: false, label: "" },
+      customField2: { enabled: false, selector: "", required: false, label: "" },
     },
     filters: {
-      minEmployees: "",
-      maxEmployees: "",
       industries: [] as string[],
       locations: [] as string[],
+      minEmployees: "",
+      maxEmployees: "",
+      minRevenue: "",
+      maxRevenue: "",
+      keywords: "",
+      excludeKeywords: "",
+      companySizes: [] as string[],
+      foundingYearRange: { min: "", max: "" },
+      requiredFields: [] as string[],
     },
     advanced: {
       respectRobots: true,
       delay: "1000",
       maxPages: "100",
       followLinks: false,
+      maxDepth: "2",
+      userAgent: "default",
+      timeout: "30000",
+      retryAttempts: "3",
     },
   })
 
@@ -189,24 +210,45 @@ export default function ScrapingEngine() {
       setNewJob({
         name: "",
         urls: "",
-        selectors: {
-          companyName: "",
-          description: "",
-          employees: "",
-          revenue: "",
-          contact: "",
+        strategy: "intelligent",
+        dataFields: {
+          companyName: { enabled: true, selector: "", required: true },
+          industry: { enabled: true, selector: "", required: false },
+          description: { enabled: true, selector: "", required: false },
+          employees: { enabled: true, selector: "", required: false },
+          revenue: { enabled: true, selector: "", required: false },
+          location: { enabled: true, selector: "", required: false },
+          website: { enabled: true, selector: "", required: false },
+          contactEmail: { enabled: true, selector: "", required: false },
+          contactPhone: { enabled: false, selector: "", required: false },
+          foundingYear: { enabled: false, selector: "", required: false },
+          technologies: { enabled: false, selector: "", required: false },
+          socialMedia: { enabled: false, selector: "", required: false },
+          customField1: { enabled: false, selector: "", required: false, label: "" },
+          customField2: { enabled: false, selector: "", required: false, label: "" },
         },
         filters: {
+          industries: [] as string[],
+          locations: [] as string[],
           minEmployees: "",
           maxEmployees: "",
-          industries: [],
-          locations: [],
+          minRevenue: "",
+          maxRevenue: "",
+          keywords: "",
+          excludeKeywords: "",
+          companySizes: [] as string[],
+          foundingYearRange: { min: "", max: "" },
+          requiredFields: [] as string[],
         },
         advanced: {
           respectRobots: true,
           delay: "1000",
           maxPages: "100",
           followLinks: false,
+          maxDepth: "2",
+          userAgent: "default",
+          timeout: "30000",
+          retryAttempts: "3",
         },
       })
     }, 2000)
@@ -292,10 +334,13 @@ export default function ScrapingEngine() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Basic Configuration */}
             <div className="space-y-4">
+              <h3 className="font-semibold text-lg">Basic Configuration</h3>
+
               <div>
-                <Label htmlFor="jobName">Job Name</Label>
+                <Label htmlFor="jobName">Job Name *</Label>
                 <Input
                   id="jobName"
                   placeholder="e.g., Tech Companies - San Francisco"
@@ -305,19 +350,20 @@ export default function ScrapingEngine() {
               </div>
 
               <div>
-                <Label htmlFor="urls">Target URLs</Label>
+                <Label htmlFor="urls">Target URLs *</Label>
                 <Textarea
                   id="urls"
-                  placeholder="https://example.com/companies&#10;https://directory.com/listings"
+                  placeholder="https://example.com/companies&#10;https://directory.com/listings&#10;https://industry-database.com"
                   value={newJob.urls}
                   onChange={(e) => setNewJob({ ...newJob, urls: e.target.value })}
-                  rows={3}
+                  rows={4}
                 />
+                <p className="text-xs text-muted-foreground mt-1">Enter one URL per line</p>
               </div>
 
               <div>
                 <Label>Scraping Strategy</Label>
-                <Select defaultValue="intelligent">
+                <Select value={newJob.strategy} onValueChange={(value) => setNewJob({ ...newJob, strategy: value })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -325,61 +371,336 @@ export default function ScrapingEngine() {
                     <SelectItem value="intelligent">AI-Powered Intelligent Scraping</SelectItem>
                     <SelectItem value="custom">Custom CSS Selectors</SelectItem>
                     <SelectItem value="api">API Integration</SelectItem>
+                    <SelectItem value="hybrid">Hybrid (AI + Custom)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
+            {/* Data Fields Configuration */}
             <div className="space-y-4">
-              <div>
-                <Label>Data Fields to Extract</Label>
-                <div className="space-y-2 mt-2">
-                  {[
-                    { key: "companyName", label: "Company Name" },
-                    { key: "description", label: "Description" },
-                    { key: "employees", label: "Employee Count" },
-                    { key: "revenue", label: "Revenue" },
-                    { key: "contact", label: "Contact Info" },
-                  ].map((field) => (
-                    <div key={field.key} className="flex items-center space-x-2">
-                      <Checkbox defaultChecked />
-                      <Label className="text-sm font-normal">{field.label}</Label>
+              <h3 className="font-semibold text-lg">Data Fields to Extract</h3>
+
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {Object.entries(newJob.dataFields).map(([fieldKey, fieldConfig]) => (
+                  <div key={fieldKey} className="border rounded-lg p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          checked={fieldConfig.enabled}
+                          onCheckedChange={(checked) =>
+                            setNewJob({
+                              ...newJob,
+                              dataFields: {
+                                ...newJob.dataFields,
+                                [fieldKey]: { ...fieldConfig, enabled: checked as boolean },
+                              },
+                            })
+                          }
+                        />
+                        <Label className="text-sm font-medium">
+                          {fieldKey === "customField1" || fieldKey === "customField2"
+                            ? fieldConfig.label || `Custom Field ${fieldKey.slice(-1)}`
+                            : fieldKey.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}
+                          {fieldConfig.required && <span className="text-red-500 ml-1">*</span>}
+                        </Label>
+                      </div>
+                      {fieldConfig.required && (
+                        <Badge variant="outline" className="text-xs">
+                          Required
+                        </Badge>
+                      )}
                     </div>
-                  ))}
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
+                    {fieldConfig.enabled && (
+                      <div className="space-y-2">
+                        {(fieldKey === "customField1" || fieldKey === "customField2") && (
+                          <Input
+                            placeholder="Field label (e.g., 'CEO Name', 'Funding Stage')"
+                            value={fieldConfig.label}
+                            onChange={(e) =>
+                              setNewJob({
+                                ...newJob,
+                                dataFields: {
+                                  ...newJob.dataFields,
+                                  [fieldKey]: { ...fieldConfig, label: e.target.value },
+                                },
+                              })
+                            }
+                            className="text-xs"
+                          />
+                        )}
+
+                        {newJob.strategy === "custom" || newJob.strategy === "hybrid" ? (
+                          <Input
+                            placeholder="CSS selector (e.g., '.company-name', '#revenue')"
+                            value={fieldConfig.selector}
+                            onChange={(e) =>
+                              setNewJob({
+                                ...newJob,
+                                dataFields: {
+                                  ...newJob.dataFields,
+                                  [fieldKey]: { ...fieldConfig, selector: e.target.value },
+                                },
+                              })
+                            }
+                            className="text-xs"
+                          />
+                        ) : (
+                          <p className="text-xs text-muted-foreground">AI will automatically detect this field</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Filtering Options */}
+            <div className="space-y-4">
+              <h3 className="font-semibold text-lg">Pre-Filtering Options</h3>
+
+              <div className="space-y-4">
                 <div>
-                  <Label htmlFor="delay">Delay (ms)</Label>
+                  <Label>Target Industries</Label>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    {["Technology", "Healthcare", "Finance", "Education", "Retail", "Manufacturing"].map((industry) => (
+                      <Label key={industry} className="flex items-center space-x-2 text-xs">
+                        <Checkbox
+                          checked={newJob.filters.industries.includes(industry)}
+                          onCheckedChange={(checked) => {
+                            const industries = checked
+                              ? [...newJob.filters.industries, industry]
+                              : newJob.filters.industries.filter((i) => i !== industry)
+                            setNewJob({
+                              ...newJob,
+                              filters: { ...newJob.filters, industries },
+                            })
+                          }}
+                        />
+                        <span>{industry}</span>
+                      </Label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Company Size</Label>
+                  <div className="grid grid-cols-1 gap-2 mt-2">
+                    {[
+                      { value: "startup", label: "Startup (1-10)" },
+                      { value: "small", label: "Small (11-50)" },
+                      { value: "medium", label: "Medium (51-200)" },
+                      { value: "large", label: "Large (201-1000)" },
+                      { value: "enterprise", label: "Enterprise (1000+)" },
+                    ].map((size) => (
+                      <Label key={size.value} className="flex items-center space-x-2 text-xs">
+                        <Checkbox
+                          checked={newJob.filters.companySizes.includes(size.value)}
+                          onCheckedChange={(checked) => {
+                            const sizes = checked
+                              ? [...newJob.filters.companySizes, size.value]
+                              : newJob.filters.companySizes.filter((s) => s !== size.value)
+                            setNewJob({
+                              ...newJob,
+                              filters: { ...newJob.filters, companySizes: sizes },
+                            })
+                          }}
+                        />
+                        <span>{size.label}</span>
+                      </Label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">Min Employees</Label>
+                    <Input
+                      type="number"
+                      placeholder="10"
+                      value={newJob.filters.minEmployees}
+                      onChange={(e) =>
+                        setNewJob({
+                          ...newJob,
+                          filters: { ...newJob.filters, minEmployees: e.target.value },
+                        })
+                      }
+                      className="text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Max Employees</Label>
+                    <Input
+                      type="number"
+                      placeholder="1000"
+                      value={newJob.filters.maxEmployees}
+                      onChange={(e) =>
+                        setNewJob({
+                          ...newJob,
+                          filters: { ...newJob.filters, maxEmployees: e.target.value },
+                        })
+                      }
+                      className="text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">Min Revenue ($)</Label>
+                    <Input
+                      type="number"
+                      placeholder="1000000"
+                      value={newJob.filters.minRevenue}
+                      onChange={(e) =>
+                        setNewJob({
+                          ...newJob,
+                          filters: { ...newJob.filters, minRevenue: e.target.value },
+                        })
+                      }
+                      className="text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Max Revenue ($)</Label>
+                    <Input
+                      type="number"
+                      placeholder="100000000"
+                      value={newJob.filters.maxRevenue}
+                      onChange={(e) =>
+                        setNewJob({
+                          ...newJob,
+                          filters: { ...newJob.filters, maxRevenue: e.target.value },
+                        })
+                      }
+                      className="text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-xs">Include Keywords</Label>
                   <Input
-                    id="delay"
-                    type="number"
-                    value={newJob.advanced.delay}
+                    placeholder="AI, machine learning, SaaS, cloud"
+                    value={newJob.filters.keywords}
                     onChange={(e) =>
                       setNewJob({
                         ...newJob,
-                        advanced: { ...newJob.advanced, delay: e.target.value },
+                        filters: { ...newJob.filters, keywords: e.target.value },
                       })
                     }
+                    className="text-xs"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">Comma-separated keywords to include</p>
                 </div>
+
                 <div>
-                  <Label htmlFor="maxPages">Max Pages</Label>
+                  <Label className="text-xs">Exclude Keywords</Label>
                   <Input
-                    id="maxPages"
-                    type="number"
-                    value={newJob.advanced.maxPages}
+                    placeholder="non-profit, government, consulting"
+                    value={newJob.filters.excludeKeywords}
                     onChange={(e) =>
                       setNewJob({
                         ...newJob,
-                        advanced: { ...newJob.advanced, maxPages: e.target.value },
+                        filters: { ...newJob.filters, excludeKeywords: e.target.value },
                       })
                     }
+                    className="text-xs"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">Comma-separated keywords to exclude</p>
+                </div>
+
+                <div>
+                  <Label className="text-xs">Required Data Fields</Label>
+                  <div className="grid grid-cols-2 gap-1 mt-2">
+                    {["contactEmail", "revenue", "employees", "website"].map((field) => (
+                      <Label key={field} className="flex items-center space-x-2 text-xs">
+                        <Checkbox
+                          checked={newJob.filters.requiredFields.includes(field)}
+                          onCheckedChange={(checked) => {
+                            const fields = checked
+                              ? [...newJob.filters.requiredFields, field]
+                              : newJob.filters.requiredFields.filter((f) => f !== field)
+                            setNewJob({
+                              ...newJob,
+                              filters: { ...newJob.filters, requiredFields: fields },
+                            })
+                          }}
+                        />
+                        <span>{field.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}</span>
+                      </Label>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Only include leads with these fields populated</p>
                 </div>
               </div>
+            </div>
+          </div>
 
+          {/* Advanced Settings */}
+          <div className="border-t pt-6">
+            <h3 className="font-semibold text-lg mb-4">Advanced Settings</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <Label className="text-xs">Delay (ms)</Label>
+                <Input
+                  type="number"
+                  value={newJob.advanced.delay}
+                  onChange={(e) =>
+                    setNewJob({
+                      ...newJob,
+                      advanced: { ...newJob.advanced, delay: e.target.value },
+                    })
+                  }
+                  className="text-xs"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Max Pages</Label>
+                <Input
+                  type="number"
+                  value={newJob.advanced.maxPages}
+                  onChange={(e) =>
+                    setNewJob({
+                      ...newJob,
+                      advanced: { ...newJob.advanced, maxPages: e.target.value },
+                    })
+                  }
+                  className="text-xs"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Max Depth</Label>
+                <Input
+                  type="number"
+                  value={newJob.advanced.maxDepth}
+                  onChange={(e) =>
+                    setNewJob({
+                      ...newJob,
+                      advanced: { ...newJob.advanced, maxDepth: e.target.value },
+                    })
+                  }
+                  className="text-xs"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Timeout (ms)</Label>
+                <Input
+                  type="number"
+                  value={newJob.advanced.timeout}
+                  onChange={(e) =>
+                    setNewJob({
+                      ...newJob,
+                      advanced: { ...newJob.advanced, timeout: e.target.value },
+                    })
+                  }
+                  className="text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-4 mt-4">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   checked={newJob.advanced.respectRobots}
@@ -390,7 +711,19 @@ export default function ScrapingEngine() {
                     })
                   }
                 />
-                <Label className="text-sm">Respect robots.txt</Label>
+                <Label className="text-xs">Respect robots.txt</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  checked={newJob.advanced.followLinks}
+                  onCheckedChange={(checked) =>
+                    setNewJob({
+                      ...newJob,
+                      advanced: { ...newJob.advanced, followLinks: checked as boolean },
+                    })
+                  }
+                />
+                <Label className="text-xs">Follow internal links</Label>
               </div>
             </div>
           </div>
