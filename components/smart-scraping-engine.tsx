@@ -8,13 +8,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Brain, Search, CheckCircle, AlertTriangle, X, Zap, Database, Settings, Download, Eye } from "lucide-react"
+import {
+  Brain,
+  Search,
+  CheckCircle,
+  AlertTriangle,
+  Download,
+  Eye,
+  Zap,
+  Activity,
+  Shield,
+  BarChart3,
+} from "lucide-react"
 
 interface AnalysisStep {
   name: string
   status: "pending" | "running" | "completed" | "failed"
   message: string
-  details?: string
 }
 
 interface LeadPreview {
@@ -27,25 +37,70 @@ interface LeadPreview {
   confidence: number
 }
 
-interface AnalysisResult {
-  canScrape: boolean
-  estimatedLeads: number
-  leadPreviews: LeadPreview[]
-  issues: string[]
-  recommendations: string[]
-  dataFields: string[]
+interface ExtractedLeads {
+  leads: LeadPreview[]
+  totalCount: number
+  extractedAt: Date
 }
+
+interface QualificationResult {
+  totalLeads: number
+  qualifiedLeads: number
+  highPriority: number
+  mediumPriority: number
+  lowPriority: number
+  avgScore: number
+}
+
+interface CRMSyncResult {
+  syncedLeads: number
+  salesforce: number
+  hubspot: number
+  failedSync: number
+  syncedAt: Date
+}
+
+interface QualityCheckResult {
+  qualityScore: number
+  duplicatesFound: number
+  missingData: number
+  enrichedRecords: number
+  cleanedLeads: number
+}
+
+type WorkflowStep = "analysis" | "extraction" | "qualification" | "crm" | "quality" | "report"
 
 export default function SmartScrapingEngine() {
   const [url, setUrl] = useState("")
+  const [currentStep, setCurrentStep] = useState<WorkflowStep | null>(null)
+
+  // Analysis state
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisSteps, setAnalysisSteps] = useState<AnalysisStep[]>([])
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false)
+  const [canExtract, setCanExtract] = useState(false)
+  const [estimatedLeads, setEstimatedLeads] = useState(0)
+
+  // Extraction state
   const [isExtracting, setIsExtracting] = useState(false)
   const [extractionProgress, setExtractionProgress] = useState(0)
+  const [extractedLeads, setExtractedLeads] = useState<ExtractedLeads | null>(null)
 
-  const steps = [
+  // Qualification state
+  const [isQualifying, setIsQualifying] = useState(false)
+  const [qualificationProgress, setQualificationProgress] = useState(0)
+  const [qualificationResult, setQualificationResult] = useState<QualificationResult | null>(null)
+
+  // CRM state
+  const [isSyncing, setIsSyncing] = useState(false)
+  const [syncProgress, setSyncProgress] = useState(0)
+  const [crmResult, setCrmResult] = useState<CRMSyncResult | null>(null)
+
+  // Quality state
+  const [isCheckingQuality, setIsCheckingQuality] = useState(false)
+  const [qualityProgress, setQualityProgress] = useState(0)
+  const [qualityResult, setQualityResult] = useState<QualityCheckResult | null>(null)
+
+  const analysisStepsList = [
     { name: "Accessing Website", message: "Checking if website is accessible..." },
     { name: "AI Analysis", message: "AI is analyzing page structure and content..." },
     { name: "Data Detection", message: "Identifying company data patterns..." },
@@ -86,14 +141,14 @@ export default function SmartScrapingEngine() {
   const handleAnalyze = async () => {
     if (!url) return
 
+    setCurrentStep("analysis")
     setIsAnalyzing(true)
     setAnalysisSteps([])
-    setAnalysisResult(null)
-    setShowAdvancedOptions(false)
+    setCanExtract(false)
 
     // Simulate AI analysis process
-    for (let i = 0; i < steps.length; i++) {
-      const step = steps[i]
+    for (let i = 0; i < analysisStepsList.length; i++) {
+      const step = analysisStepsList[i]
 
       // Add step as running
       setAnalysisSteps((prev) => [...prev, { name: step.name, status: "running", message: step.message }])
@@ -109,34 +164,14 @@ export default function SmartScrapingEngine() {
       )
     }
 
-    // Simulate analysis result
-    const result: AnalysisResult = {
-      canScrape: true,
-      estimatedLeads: 1247,
-      leadPreviews: mockLeadPreviews,
-      issues: [],
-      recommendations: [
-        "AI detected structured company data",
-        "High-quality contact information available",
-        "Recommended extraction method: Intelligent parsing",
-      ],
-      dataFields: [
-        "Company Name",
-        "Industry",
-        "Location",
-        "Employee Count",
-        "Revenue",
-        "Contact Email",
-        "Website",
-        "Description",
-      ],
-    }
-
-    setAnalysisResult(result)
+    // Set results
+    setCanExtract(true)
+    setEstimatedLeads(1247)
     setIsAnalyzing(false)
   }
 
-  const handleStartExtraction = async () => {
+  const handleExtractLeads = async () => {
+    setCurrentStep("extraction")
     setIsExtracting(true)
     setExtractionProgress(0)
 
@@ -146,11 +181,129 @@ export default function SmartScrapingEngine() {
         if (prev >= 100) {
           clearInterval(interval)
           setIsExtracting(false)
+
+          // Set extracted leads
+          setExtractedLeads({
+            leads: mockLeadPreviews,
+            totalCount: 1247,
+            extractedAt: new Date(),
+          })
+
           return 100
         }
         return prev + Math.random() * 8
       })
     }, 500)
+  }
+
+  const handleDownloadCSV = () => {
+    if (!extractedLeads) return
+
+    const csvContent = [
+      "Company Name,Industry,Location,Employees,Revenue,Contact Email,Confidence",
+      ...extractedLeads.leads.map(
+        (lead) =>
+          `"${lead.companyName}","${lead.industry}","${lead.location}",${lead.employees},${lead.revenue},"${lead.contactEmail}",${lead.confidence}%`,
+      ),
+    ].join("\n")
+
+    const blob = new Blob([csvContent], { type: "text/csv" })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `leads_${new Date().toISOString().split("T")[0]}.csv`
+    a.click()
+    window.URL.revokeObjectURL(url)
+  }
+
+  const handleAIQualification = async () => {
+    setCurrentStep("qualification")
+    setIsQualifying(true)
+    setQualificationProgress(0)
+
+    // Simulate qualification progress
+    const interval = setInterval(() => {
+      setQualificationProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval)
+          setIsQualifying(false)
+
+          // Set qualification results
+          setQualificationResult({
+            totalLeads: 1247,
+            qualifiedLeads: 342,
+            highPriority: 89,
+            mediumPriority: 156,
+            lowPriority: 97,
+            avgScore: 78,
+          })
+
+          return 100
+        }
+        return prev + Math.random() * 12
+      })
+    }, 600)
+  }
+
+  const handleCRMSync = async () => {
+    setCurrentStep("crm")
+    setIsSyncing(true)
+    setSyncProgress(0)
+
+    // Simulate CRM sync progress
+    const interval = setInterval(() => {
+      setSyncProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval)
+          setIsSyncing(false)
+
+          // Set CRM sync results
+          setCrmResult({
+            syncedLeads: 298,
+            salesforce: 189,
+            hubspot: 109,
+            failedSync: 44,
+            syncedAt: new Date(),
+          })
+
+          return 100
+        }
+        return prev + Math.random() * 10
+      })
+    }, 700)
+  }
+
+  const handleQualityCheck = async () => {
+    setCurrentStep("quality")
+    setIsCheckingQuality(true)
+    setQualityProgress(0)
+
+    // Simulate quality check progress
+    const interval = setInterval(() => {
+      setQualityProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval)
+          setIsCheckingQuality(false)
+
+          // Set quality check results
+          setQualityResult({
+            qualityScore: 94,
+            duplicatesFound: 23,
+            missingData: 12,
+            enrichedRecords: 267,
+            cleanedLeads: 275,
+          })
+
+          return 100
+        }
+        return prev + Math.random() * 15
+      })
+    }, 500)
+  }
+
+  const handleGenerateReport = () => {
+    setCurrentStep("report")
+    // This would generate and show the final report
   }
 
   const getStepIcon = (status: string) => {
@@ -160,7 +313,7 @@ export default function SmartScrapingEngine() {
       case "running":
         return <Brain className="h-4 w-4 text-blue-600 animate-pulse" />
       case "failed":
-        return <X className="h-4 w-4 text-red-600" />
+        return <AlertTriangle className="h-4 w-4 text-red-600" />
       default:
         return <div className="h-4 w-4 rounded-full border-2 border-gray-300" />
     }
@@ -168,15 +321,15 @@ export default function SmartScrapingEngine() {
 
   return (
     <div className="space-y-6">
-      {/* Simple URL Input */}
+      {/* Step 1: URL Input and Analysis */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Brain className="h-5 w-5" />
-            AI-Powered Lead Extraction
+            Step 1: AI Website Analysis
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Just enter a website URL. Our AI will analyze it and extract leads automatically.
+            Enter a website URL and let our AI analyze it for potential leads.
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -189,8 +342,13 @@ export default function SmartScrapingEngine() {
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 className="flex-1"
+                disabled={currentStep !== null}
               />
-              <Button onClick={handleAnalyze} disabled={isAnalyzing || !url} className="min-w-32">
+              <Button
+                onClick={handleAnalyze}
+                disabled={isAnalyzing || !url || currentStep !== null}
+                className="min-w-32"
+              >
                 {isAnalyzing ? (
                   <>
                     <Brain className="h-4 w-4 mr-2 animate-pulse" />
@@ -199,7 +357,7 @@ export default function SmartScrapingEngine() {
                 ) : (
                   <>
                     <Search className="h-4 w-4 mr-2" />
-                    Analyze & Extract
+                    Analyze Website
                   </>
                 )}
               </Button>
@@ -221,225 +379,351 @@ export default function SmartScrapingEngine() {
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
 
-      {/* Analysis Results */}
-      {analysisResult && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-                Analysis Complete
-              </div>
-              <Badge className="bg-green-100 text-green-800">{analysisResult.estimatedLeads} leads found</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Success Message */}
+          {/* Analysis Success */}
+          {canExtract && (
             <Alert className="border-green-200 bg-green-50">
               <CheckCircle className="h-4 w-4" />
               <AlertDescription>
-                <strong>Great news!</strong> Our AI successfully analyzed the website and found{" "}
-                {analysisResult.estimatedLeads} potential leads. The data quality looks excellent with high confidence
-                scores.
+                <strong>Analysis Complete!</strong> AI found {estimatedLeads} potential leads on this website.
               </AlertDescription>
             </Alert>
+          )}
+        </CardContent>
+      </Card>
 
-            {/* Lead Previews */}
-            <div>
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <Eye className="h-4 w-4" />
-                Lead Preview (First 3 results)
-              </h3>
-              <div className="space-y-3">
-                {analysisResult.leadPreviews.map((lead, index) => (
-                  <div key={index} className="border rounded-lg p-4 bg-white">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h4 className="font-semibold">{lead.companyName}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {lead.industry} • {lead.location}
-                        </p>
-                      </div>
-                      <Badge variant="outline" className="text-xs">
-                        {lead.confidence}% confidence
-                      </Badge>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Employees:</span>
-                        <span className="ml-1 font-medium">{lead.employees}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Revenue:</span>
-                        <span className="ml-1 font-medium">${(lead.revenue / 1000000).toFixed(1)}M</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Contact:</span>
-                        <span className="ml-1 font-medium text-blue-600">{lead.contactEmail}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Quality:</span>
-                        <span className="ml-1 font-medium text-green-600">High</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Data Fields Detected */}
-            <div>
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <Database className="h-4 w-4" />
-                Data Fields Detected
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {analysisResult.dataFields.map((field, index) => (
-                  <Badge key={index} variant="secondary" className="text-xs">
-                    {field}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            {/* AI Recommendations */}
-            <div>
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <Zap className="h-4 w-4" />
-                AI Recommendations
-              </h3>
-              <ul className="space-y-2">
-                {analysisResult.recommendations.map((rec, index) => (
-                  <li key={index} className="flex items-start gap-2 text-sm">
-                    <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span>{rec}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3">
-              <Button onClick={handleStartExtraction} disabled={isExtracting} className="flex-1">
-                {isExtracting ? (
-                  <>
-                    <Brain className="h-4 w-4 mr-2 animate-pulse" />
-                    Extracting {Math.round(extractionProgress)}%
-                  </>
-                ) : (
-                  <>
-                    <Download className="h-4 w-4 mr-2" />
-                    Extract All {analysisResult.estimatedLeads} Leads
-                  </>
-                )}
-              </Button>
-
-              <Button variant="outline" onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}>
-                <Settings className="h-4 w-4 mr-2" />
-                {showAdvancedOptions ? "Hide" : "Show"} Options
-              </Button>
-            </div>
+      {/* Step 2: Lead Extraction */}
+      {canExtract && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Download className="h-5 w-5" />
+              Step 2: Extract Leads
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">Extract all {estimatedLeads} leads from the website.</p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button onClick={handleExtractLeads} disabled={isExtracting || extractedLeads !== null} className="w-full">
+              {isExtracting ? (
+                <>
+                  <Brain className="h-4 w-4 mr-2 animate-pulse" />
+                  Extracting {Math.round(extractionProgress)}%
+                </>
+              ) : extractedLeads ? (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Extraction Complete
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-2" />
+                  Extract All {estimatedLeads} Leads
+                </>
+              )}
+            </Button>
 
             {/* Extraction Progress */}
             {isExtracting && (
               <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Extracting leads...</span>
-                  <span>{Math.round(extractionProgress)}%</span>
-                </div>
                 <Progress value={extractionProgress} className="h-2" />
-                <p className="text-xs text-muted-foreground">
-                  AI is intelligently extracting and validating lead data...
-                </p>
+                <p className="text-xs text-muted-foreground">AI is extracting and validating lead data...</p>
               </div>
             )}
 
-            {/* Advanced Options (Only shown after successful analysis) */}
-            {showAdvancedOptions && (
-              <Card className="border-blue-200 bg-blue-50">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Advanced Options</CardTitle>
-                  <p className="text-sm text-muted-foreground">Fine-tune the extraction since we've proven it works</p>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm">Max Leads to Extract</Label>
-                      <Input type="number" defaultValue={analysisResult.estimatedLeads} />
-                    </div>
-                    <div>
-                      <Label className="text-sm">Extraction Speed</Label>
-                      <select className="w-full p-2 border rounded text-sm">
-                        <option>Careful (Recommended)</option>
-                        <option>Balanced</option>
-                        <option>Fast</option>
-                      </select>
-                    </div>
-                  </div>
+            {/* Extraction Results */}
+            {extractedLeads && (
+              <div className="space-y-4">
+                <Alert className="border-green-200 bg-green-50">
+                  <CheckCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Success!</strong> Extracted {extractedLeads.totalCount} leads from the website.
+                  </AlertDescription>
+                </Alert>
 
-                  <div>
-                    <Label className="text-sm">Additional Filters</Label>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      <Input placeholder="Min employees" type="number" />
-                      <Input placeholder="Max employees" type="number" />
-                    </div>
+                {/* Lead Preview */}
+                <div>
+                  <h3 className="font-semibold mb-3 flex items-center gap-2">
+                    <Eye className="h-4 w-4" />
+                    Lead Preview (First 3 results)
+                  </h3>
+                  <div className="space-y-3">
+                    {extractedLeads.leads.slice(0, 3).map((lead, index) => (
+                      <div key={index} className="border rounded-lg p-4 bg-white">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h4 className="font-semibold">{lead.companyName}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {lead.industry} • {lead.location}
+                            </p>
+                          </div>
+                          <Badge variant="outline" className="text-xs">
+                            {lead.confidence}% confidence
+                          </Badge>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Employees:</span>
+                            <span className="ml-1 font-medium">{lead.employees}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Revenue:</span>
+                            <span className="ml-1 font-medium">${(lead.revenue / 1000000).toFixed(1)}M</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Contact:</span>
+                            <span className="ml-1 font-medium text-blue-600">{lead.contactEmail}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Quality:</span>
+                            <span className="ml-1 font-medium text-green-600">High</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
+                </div>
 
-                  <div>
-                    <Label className="text-sm">Required Fields</Label>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      Only extract leads that have these fields populated
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {["Email", "Phone", "Revenue", "Employee Count"].map((field) => (
-                        <label key={field} className="flex items-center space-x-2 text-xs">
-                          <input type="checkbox" className="rounded" />
-                          <span>{field}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                <Button onClick={handleDownloadCSV} variant="outline" className="w-full">
+                  <Download className="h-4 w-4 mr-2" />
+                  Download All {extractedLeads.totalCount} Leads as CSV
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>
       )}
 
-      {/* Zero Leads Troubleshooting (Only shown if analysis fails) */}
-      {analysisResult && !analysisResult.canScrape && (
-        <Card className="border-red-200 bg-red-50">
+      {/* Step 3: AI Qualification */}
+      {extractedLeads && (
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-800">
-              <AlertTriangle className="h-5 w-5" />
-              No Leads Found - Let's Fix This
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5" />
+              Step 3: AI Lead Qualification
             </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Let AI analyze and score each lead for quality and potential.
+            </p>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Alert className="border-red-200 bg-red-100">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                Our AI couldn't find any leads on this website. Here are the most likely reasons and automatic fixes:
-              </AlertDescription>
-            </Alert>
+            <Button
+              onClick={handleAIQualification}
+              disabled={isQualifying || qualificationResult !== null}
+              className="w-full"
+            >
+              {isQualifying ? (
+                <>
+                  <Zap className="h-4 w-4 mr-2 animate-pulse" />
+                  Qualifying Leads {Math.round(qualificationProgress)}%
+                </>
+              ) : qualificationResult ? (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Qualification Complete
+                </>
+              ) : (
+                <>
+                  <Zap className="h-4 w-4 mr-2" />
+                  Start AI Qualification
+                </>
+              )}
+            </Button>
 
-            <div className="space-y-3">
-              {analysisResult.issues.map((issue, index) => (
-                <div key={index} className="flex items-start gap-3 p-3 bg-white border rounded">
-                  <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-red-800">{issue}</p>
+            {/* Qualification Progress */}
+            {isQualifying && (
+              <div className="space-y-2">
+                <Progress value={qualificationProgress} className="h-2" />
+                <p className="text-xs text-muted-foreground">AI is analyzing lead quality and scoring potential...</p>
+              </div>
+            )}
+
+            {/* Qualification Results */}
+            {qualificationResult && (
+              <div className="space-y-4">
+                <Alert className="border-green-200 bg-green-50">
+                  <CheckCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Qualification Complete!</strong> {qualificationResult.qualifiedLeads} out of{" "}
+                    {qualificationResult.totalLeads} leads qualified (Average score: {qualificationResult.avgScore}%).
+                  </AlertDescription>
+                </Alert>
+
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div className="p-3 bg-red-50 rounded-lg">
+                    <div className="text-2xl font-bold text-red-600">{qualificationResult.highPriority}</div>
+                    <div className="text-sm text-muted-foreground">High Priority</div>
+                  </div>
+                  <div className="p-3 bg-yellow-50 rounded-lg">
+                    <div className="text-2xl font-bold text-yellow-600">{qualificationResult.mediumPriority}</div>
+                    <div className="text-sm text-muted-foreground">Medium Priority</div>
+                  </div>
+                  <div className="p-3 bg-green-50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">{qualificationResult.lowPriority}</div>
+                    <div className="text-sm text-muted-foreground">Low Priority</div>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
-            <Button className="w-full" variant="outline">
-              <Brain className="h-4 w-4 mr-2" />
-              Try Alternative AI Analysis Methods
+      {/* Step 4: CRM Integration */}
+      {qualificationResult && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Step 4: CRM Integration
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">Sync qualified leads to your CRM systems.</p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button onClick={handleCRMSync} disabled={isSyncing || crmResult !== null} className="w-full">
+              {isSyncing ? (
+                <>
+                  <Activity className="h-4 w-4 mr-2 animate-spin" />
+                  Syncing to CRM {Math.round(syncProgress)}%
+                </>
+              ) : crmResult ? (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  CRM Sync Complete
+                </>
+              ) : (
+                <>
+                  <Activity className="h-4 w-4 mr-2" />
+                  Sync to CRM Systems
+                </>
+              )}
+            </Button>
+
+            {/* Sync Progress */}
+            {isSyncing && (
+              <div className="space-y-2">
+                <Progress value={syncProgress} className="h-2" />
+                <p className="text-xs text-muted-foreground">Syncing qualified leads to Salesforce and HubSpot...</p>
+              </div>
+            )}
+
+            {/* CRM Results */}
+            {crmResult && (
+              <div className="space-y-4">
+                <Alert className="border-green-200 bg-green-50">
+                  <CheckCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>CRM Sync Complete!</strong> {crmResult.syncedLeads} leads successfully synced to your CRM
+                    systems.
+                  </AlertDescription>
+                </Alert>
+
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">{crmResult.salesforce}</div>
+                    <div className="text-sm text-muted-foreground">Salesforce</div>
+                  </div>
+                  <div className="p-3 bg-orange-50 rounded-lg">
+                    <div className="text-2xl font-bold text-orange-600">{crmResult.hubspot}</div>
+                    <div className="text-sm text-muted-foreground">HubSpot</div>
+                  </div>
+                  <div className="p-3 bg-red-50 rounded-lg">
+                    <div className="text-2xl font-bold text-red-600">{crmResult.failedSync}</div>
+                    <div className="text-sm text-muted-foreground">Failed</div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 5: Data Quality Check */}
+      {crmResult && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Step 5: Data Quality Check
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">Validate and clean the lead data for optimal quality.</p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button
+              onClick={handleQualityCheck}
+              disabled={isCheckingQuality || qualityResult !== null}
+              className="w-full"
+            >
+              {isCheckingQuality ? (
+                <>
+                  <Shield className="h-4 w-4 mr-2 animate-pulse" />
+                  Checking Quality {Math.round(qualityProgress)}%
+                </>
+              ) : qualityResult ? (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Quality Check Complete
+                </>
+              ) : (
+                <>
+                  <Shield className="h-4 w-4 mr-2" />
+                  Run Quality Check
+                </>
+              )}
+            </Button>
+
+            {/* Quality Progress */}
+            {isCheckingQuality && (
+              <div className="space-y-2">
+                <Progress value={qualityProgress} className="h-2" />
+                <p className="text-xs text-muted-foreground">
+                  Checking for duplicates, missing data, and enriching records...
+                </p>
+              </div>
+            )}
+
+            {/* Quality Results */}
+            {qualityResult && (
+              <div className="space-y-4">
+                <Alert className="border-green-200 bg-green-50">
+                  <CheckCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Quality Check Complete!</strong> Data quality score: {qualityResult.qualityScore}%.{" "}
+                    {qualityResult.cleanedLeads} leads are now CRM-ready.
+                  </AlertDescription>
+                </Alert>
+
+                <div className="grid grid-cols-2 gap-4 text-center">
+                  <div className="p-3 bg-yellow-50 rounded-lg">
+                    <div className="text-xl font-bold text-yellow-600">{qualityResult.duplicatesFound}</div>
+                    <div className="text-sm text-muted-foreground">Duplicates Removed</div>
+                  </div>
+                  <div className="p-3 bg-green-50 rounded-lg">
+                    <div className="text-xl font-bold text-green-600">{qualityResult.enrichedRecords}</div>
+                    <div className="text-sm text-muted-foreground">Records Enriched</div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 6: Generate Report */}
+      {qualityResult && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Step 6: Generate Final Report
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Generate a comprehensive report of the entire lead generation process.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={handleGenerateReport} className="w-full">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Generate Complete Report
             </Button>
           </CardContent>
         </Card>
