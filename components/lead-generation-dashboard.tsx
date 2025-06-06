@@ -4,16 +4,17 @@ import { useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Activity, Database, Filter, Zap, BarChart3, Settings } from "lucide-react"
+import { Activity, Database, Filter, Zap, BarChart3, Settings, Workflow } from "lucide-react"
 import ScrapingEngine from "./scraping-engine"
 import AdvancedFilters from "./advanced-filters"
 import CRMIntegration from "./crm-integration"
 import AIQualification from "./ai-qualification"
 import DataQuality from "./data-quality"
 import ReportingDashboard from "./reporting-dashboard"
+import WorkflowOrchestrator from "./workflow-orchestrator"
 
 export default function LeadGenerationDashboard() {
-  const [activeTab, setActiveTab] = useState("scraping")
+  const [activeTab, setActiveTab] = useState("workflow")
   const [stats] = useState({
     totalLeads: 15847,
     qualifiedLeads: 3421,
@@ -92,7 +93,11 @@ export default function LeadGenerationDashboard() {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
+            <TabsTrigger value="workflow" className="flex items-center gap-2">
+              <Workflow className="h-4 w-4" />
+              Workflow
+            </TabsTrigger>
             <TabsTrigger value="scraping" className="flex items-center gap-2">
               <Database className="h-4 w-4" />
               Scraping
@@ -118,6 +123,10 @@ export default function LeadGenerationDashboard() {
               Reports
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="workflow">
+            <WorkflowOrchestrator />
+          </TabsContent>
 
           <TabsContent value="scraping">
             <ScrapingEngine />
