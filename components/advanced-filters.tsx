@@ -157,7 +157,7 @@ export default function AdvancedFilters() {
     maxEmployees: "",
     minRevenue: "",
     maxRevenue: "",
-    lastUpdated: "",
+    lastUpdated: "any",
   })
 
   const [savedFilters, setSavedFilters] = useState<string[]>([
@@ -238,7 +238,7 @@ export default function AdvancedFilters() {
       }
 
       // Last updated filter
-      if (filters.lastUpdated) {
+      if (filters.lastUpdated && filters.lastUpdated !== "any") {
         const daysDiff = Math.floor((Date.now() - lead.lastUpdated.getTime()) / (1000 * 60 * 60 * 24))
         const maxDays = Number.parseInt(filters.lastUpdated)
         if (daysDiff > maxDays) return false
@@ -281,7 +281,7 @@ export default function AdvancedFilters() {
       maxEmployees: "",
       minRevenue: "",
       maxRevenue: "",
-      lastUpdated: "",
+      lastUpdated: "any",
     })
   }
 
@@ -363,7 +363,7 @@ export default function AdvancedFilters() {
                 </SelectTrigger>
                 <SelectContent>
                   {savedFilters.map((filterName) => (
-                    <SelectItem key={filterName} value={filterName || "default"}>
+                    <SelectItem key={filterName} value={filterName}>
                       {filterName}
                     </SelectItem>
                   ))}
@@ -603,7 +603,7 @@ export default function AdvancedFilters() {
                     <SelectValue placeholder="Any time" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Any time</SelectItem>
+                    <SelectItem value="any">Any time</SelectItem>
                     <SelectItem value="1">Last 24 hours</SelectItem>
                     <SelectItem value="7">Last week</SelectItem>
                     <SelectItem value="30">Last month</SelectItem>
