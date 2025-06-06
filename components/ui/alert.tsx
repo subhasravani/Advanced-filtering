@@ -1,3 +1,5 @@
+"use client"
+
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
@@ -43,3 +45,5 @@ const AlertTitle = React.forwardRef<React.ElementRef<"p">, React.ComponentPropsW
 AlertTitle.displayName = "AlertTitle"
 
 export { Alert, AlertTitle, AlertDescription }
+import { AlertTriangle } from "lucide-react"
+export { AlertTriangle }

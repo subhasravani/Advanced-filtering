@@ -4,18 +4,17 @@ import { useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Activity, Database, Filter, Zap, BarChart3, Settings, Workflow, Bug } from "lucide-react"
-import ScrapingEngine from "./scraping-engine"
+import { Activity, Database, Filter, Zap, BarChart3, Settings, Workflow, Brain } from "lucide-react"
+import SmartScrapingEngine from "./smart-scraping-engine"
 import AdvancedFilters from "./advanced-filters"
 import CRMIntegration from "./crm-integration"
 import AIQualification from "./ai-qualification"
 import DataQuality from "./data-quality"
 import ReportingDashboard from "./reporting-dashboard"
 import WorkflowOrchestrator from "./workflow-orchestrator"
-import ScrapingDebugger from "./scraping-debugger"
 
 export default function LeadGenerationDashboard() {
-  const [activeTab, setActiveTab] = useState("workflow")
+  const [activeTab, setActiveTab] = useState("smart-scraping")
   const [stats] = useState({
     totalLeads: 15847,
     qualifiedLeads: 3421,
@@ -28,8 +27,10 @@ export default function LeadGenerationDashboard() {
       <div className="container mx-auto p-6 max-w-7xl">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Lead Generation Platform</h1>
-          <p className="text-muted-foreground text-lg">AI-powered lead scraping, qualification, and CRM integration</p>
+          <h1 className="text-4xl font-bold mb-2">AI Lead Generation Platform</h1>
+          <p className="text-muted-foreground text-lg">
+            Just enter a website URL - our AI handles everything automatically
+          </p>
         </div>
 
         {/* Stats Overview */}
@@ -80,13 +81,13 @@ export default function LeadGenerationDashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Active Filters</p>
-                  <p className="text-3xl font-bold">{stats.activeFilters}</p>
-                  <Badge variant="destructive" className="mt-1">
-                    High precision
+                  <p className="text-sm font-medium text-muted-foreground">Success Rate</p>
+                  <p className="text-3xl font-bold">94%</p>
+                  <Badge variant="default" className="mt-1">
+                    AI-powered
                   </Badge>
                 </div>
-                <Filter className="h-8 w-8 text-orange-600" />
+                <Brain className="h-8 w-8 text-orange-600" />
               </div>
             </CardContent>
           </Card>
@@ -94,18 +95,14 @@ export default function LeadGenerationDashboard() {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-7">
+            <TabsTrigger value="smart-scraping" className="flex items-center gap-2">
+              <Brain className="h-4 w-4" />
+              AI Extraction
+            </TabsTrigger>
             <TabsTrigger value="workflow" className="flex items-center gap-2">
               <Workflow className="h-4 w-4" />
               Workflow
-            </TabsTrigger>
-            <TabsTrigger value="scraping" className="flex items-center gap-2">
-              <Database className="h-4 w-4" />
-              Scraping
-            </TabsTrigger>
-            <TabsTrigger value="debug" className="flex items-center gap-2">
-              <Bug className="h-4 w-4" />
-              Debug
             </TabsTrigger>
             <TabsTrigger value="filters" className="flex items-center gap-2">
               <Filter className="h-4 w-4" />
@@ -129,12 +126,12 @@ export default function LeadGenerationDashboard() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="workflow">
-            <WorkflowOrchestrator />
+          <TabsContent value="smart-scraping">
+            <SmartScrapingEngine />
           </TabsContent>
 
-          <TabsContent value="scraping">
-            <ScrapingEngine />
+          <TabsContent value="workflow">
+            <WorkflowOrchestrator />
           </TabsContent>
 
           <TabsContent value="filters">
@@ -155,10 +152,6 @@ export default function LeadGenerationDashboard() {
 
           <TabsContent value="reports">
             <ReportingDashboard />
-          </TabsContent>
-
-          <TabsContent value="debug">
-            <ScrapingDebugger />
           </TabsContent>
         </Tabs>
       </div>
