@@ -19,6 +19,15 @@ import {
   Activity,
   Shield,
   BarChart3,
+  Sparkles,
+  FileText,
+  ChevronRight,
+  Award,
+  PieChart,
+  BarChart4,
+  LineChart,
+  DollarSign,
+  X,
 } from "lucide-react"
 
 interface AnalysisStep {
@@ -100,6 +109,8 @@ export default function SmartScrapingEngine() {
   const [qualityProgress, setQualityProgress] = useState(0)
   const [qualityResult, setQualityResult] = useState<QualityCheckResult | null>(null)
 
+  const [showReportModal, setShowReportModal] = useState(false);
+
   const analysisStepsList = [
     { name: "Accessing Website", message: "Checking if website is accessible..." },
     { name: "AI Analysis", message: "AI is analyzing page structure and content..." },
@@ -137,6 +148,31 @@ export default function SmartScrapingEngine() {
       confidence: 88,
     },
   ]
+
+  const reportData = {
+    title: "Lead Generation Campaign Report",
+    date: new Date().toLocaleDateString(),
+    summary: {
+      totalLeads: 1247,
+      qualifiedLeads: 342,
+      syncedToCRM: 298,
+      qualityScore: 94,
+      conversionRate: 27.4,
+      estimatedValue: 1450000
+    },
+    charts: [
+      { title: "Lead Quality Distribution", type: "pie" },
+      { title: "Lead Sources", type: "bar" },
+      { title: "Industry Breakdown", type: "bar" },
+      { title: "Qualification Scores", type: "line" }
+    ],
+    recommendations: [
+      "Focus outreach on high-priority technology leads",
+      "Enrich data for healthcare segment",
+      "Schedule follow-ups for the 89 high-priority leads",
+      "Create targeted campaign for enterprise-level prospects"
+    ]
+  };
 
   const handleAnalyze = async () => {
     if (!url) return
@@ -302,8 +338,13 @@ export default function SmartScrapingEngine() {
   }
 
   const handleGenerateReport = () => {
-    setCurrentStep("report")
-    // This would generate and show the final report
+    setCurrentStep("report");
+    
+    // Simulate report generation
+    setTimeout(() => {
+      // Show the report modal
+      setShowReportModal(true);
+    }, 1500);
   }
 
   const getStepIcon = (status: string) => {
@@ -322,7 +363,7 @@ export default function SmartScrapingEngine() {
   return (
     <div className="space-y-6">
       {/* Step 1: URL Input and Analysis */}
-      <Card>
+      <Card className="border shadow-sm hover:shadow-md transition-shadow">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Brain className="h-5 w-5" />
@@ -394,7 +435,7 @@ export default function SmartScrapingEngine() {
 
       {/* Step 2: Lead Extraction */}
       {canExtract && (
-        <Card>
+        <Card className="border shadow-sm hover:shadow-md transition-shadow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Download className="h-5 w-5" />
@@ -495,7 +536,7 @@ export default function SmartScrapingEngine() {
 
       {/* Step 3: AI Qualification */}
       {extractedLeads && (
-        <Card>
+        <Card className="border shadow-sm hover:shadow-md transition-shadow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Zap className="h-5 w-5" />
@@ -570,7 +611,7 @@ export default function SmartScrapingEngine() {
 
       {/* Step 4: CRM Integration */}
       {qualificationResult && (
-        <Card>
+        <Card className="border shadow-sm hover:shadow-md transition-shadow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5" />
@@ -639,7 +680,7 @@ export default function SmartScrapingEngine() {
 
       {/* Step 5: Data Quality Check */}
       {crmResult && (
-        <Card>
+        <Card className="border shadow-sm hover:shadow-md transition-shadow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5" />
@@ -710,24 +751,151 @@ export default function SmartScrapingEngine() {
 
       {/* Step 6: Generate Report */}
       {qualityResult && (
-        <Card>
-          <CardHeader>
+        <Card className="border-2 border-blue-200 shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50">
             <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
+              <BarChart3 className="h-5 w-5 text-blue-600" />
               Step 6: Generate Final Report
             </CardTitle>
             <p className="text-sm text-muted-foreground">
               Generate a comprehensive report of the entire lead generation process.
             </p>
           </CardHeader>
-          <CardContent>
-            <Button onClick={handleGenerateReport} className="w-full">
-              <BarChart3 className="h-4 w-4 mr-2" />
+          <CardContent className="p-6">
+            <Button 
+              onClick={handleGenerateReport} 
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            >
+              <FileText className="h-4 w-4 mr-2" />
               Generate Complete Report
             </Button>
+            <p className="text-xs text-center text-muted-foreground mt-3">
+              Includes all metrics, charts, and AI-powered recommendations
+            </p>
           </CardContent>
         </Card>
       )}
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-auto">
+            <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <FileText className="h-6 w-6 text-blue-600" />
+                {reportData.title}
+              </h2>
+              <button 
+                onClick={() => setShowReportModal(false)} 
+                className="p-2 rounded-full hover:bg-gray-100"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-8">
+              {/* Report Header */}
+              <div className="text-center mb-6">
+                <p className="text-muted-foreground">Generated on {reportData.date}</p>
+                <div className="mt-4 inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-sm">
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  AI-Generated Report
+                </div>
+              </div>
+              
+              {/* Summary Stats */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl">
+                  <div className="text-3xl font-bold text-blue-700">{reportData.summary.totalLeads}</div>
+                  <div className="text-sm text-blue-600">Total Leads</div>
+                </div>
+                <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl">
+                  <div className="text-3xl font-bold text-green-700">{reportData.summary.qualifiedLeads}</div>
+                  <div className="text-sm text-green-600">Qualified Leads</div>
+                </div>
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl">
+                  <div className="text-3xl font-bold text-purple-700">{reportData.summary.syncedToCRM}</div>
+                  <div className="text-sm text-purple-600">Synced to CRM</div>
+                </div>
+              </div>
+              
+              {/* Key Metrics */}
+              <div className="bg-gray-50 p-6 rounded-xl">
+                <h3 className="text-lg font-semibold mb-4">Key Performance Metrics</h3>
+                <div className="grid grid-cols-3 gap-6">
+                  <div className="flex items-center gap-3">
+                    <Award className="h-10 w-10 text-amber-500" />
+                    <div>
+                      <div className="text-2xl font-bold">{reportData.summary.qualityScore}%</div>
+                      <div className="text-sm text-muted-foreground">Quality Score</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <PieChart className="h-10 w-10 text-blue-500" />
+                    <div>
+                      <div className="text-2xl font-bold">{reportData.summary.conversionRate}%</div>
+                      <div className="text-sm text-muted-foreground">Conversion Rate</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <DollarSign className="h-10 w-10 text-green-500" />
+                    <div>
+                      <div className="text-2xl font-bold">${(reportData.summary.estimatedValue/1000000).toFixed(1)}M</div>
+                      <div className="text-sm text-muted-foreground">Est. Value</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Charts Section */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Data Visualization</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {reportData.charts.map((chart, index) => (
+                    <div key={index} className="border rounded-lg p-4 bg-white">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-medium">{chart.title}</h4>
+                        {chart.type === 'pie' && <PieChart className="h-4 w-4 text-blue-500" />}
+                        {chart.type === 'bar' && <BarChart4 className="h-4 w-4 text-purple-500" />}
+                        {chart.type === 'line' && <LineChart className="h-4 w-4 text-green-500" />}
+                      </div>
+                      <div className="h-40 bg-gray-100 rounded flex items-center justify-center">
+                        <p className="text-sm text-muted-foreground">Chart visualization would appear here</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Recommendations */}
+                <div className="bg-blue-50 p-6 rounded-xl">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">t-lg font-semibold mb-4 flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-blue-600" />
+                    AI Recommendations
+                  </h3>
+                  <ul className="space-y-2">
+                    {reportData.recommendations.map((rec, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <ChevronRight className="h-5 w-5 text-blue-600 mt-0.5" />
+                        <span>{rec}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                
+                {/* Actions */}
+                <div className="flex gap-3 pt-4">
+                  <Button className="w-full">
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Full Report (PDF)
+                  </Button>
+                  <Button variant="outline" onClick={() => setShowReportModal(false)}>
+                    Close Report
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   )
 }
