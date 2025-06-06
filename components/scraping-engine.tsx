@@ -10,7 +10,8 @@ import { Progress } from "@/components/ui/progress"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Play, Pause, Square, Globe, AlertCircle, CheckCircle, Clock, X, Download } from "lucide-react"
+import { Play, Pause, Square, Globe, AlertCircle, CheckCircle, Clock, X, Download, Bug } from "lucide-react"
+import { Alert, AlertTriangle, AlertDescription } from "@/components/ui/alert"
 
 interface ScrapingJob {
   id: string
@@ -328,9 +329,15 @@ export default function ScrapingEngine() {
       {/* Create New Job */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Globe className="h-5 w-5" />
-            Create Scraping Job
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Globe className="h-5 w-5" />
+              Create Scraping Job
+            </div>
+            <Button variant="outline" size="sm" onClick={() => window.open("/debug", "_blank")}>
+              <Bug className="h-4 w-4 mr-2" />
+              Debug Issues
+            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -727,6 +734,19 @@ export default function ScrapingEngine() {
               </div>
             </div>
           </div>
+
+          {/* Troubleshooting Section */}
+          <Alert className="border-yellow-200 bg-yellow-50">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Getting zero leads?</strong> Common issues include JavaScript-heavy sites, anti-bot protection, or
+              incorrect selectors.
+              <Button variant="link" className="p-0 h-auto ml-1" onClick={() => window.open("/debug", "_blank")}>
+                Use our debugging tool
+              </Button>{" "}
+              to diagnose the problem.
+            </AlertDescription>
+          </Alert>
 
           <Button onClick={handleStartJob} disabled={isCreating} className="w-full">
             {isCreating ? (

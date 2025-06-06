@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Activity, Database, Filter, Zap, BarChart3, Settings, Workflow } from "lucide-react"
+import { Activity, Database, Filter, Zap, BarChart3, Settings, Workflow, Bug } from "lucide-react"
 import ScrapingEngine from "./scraping-engine"
 import AdvancedFilters from "./advanced-filters"
 import CRMIntegration from "./crm-integration"
@@ -12,6 +12,7 @@ import AIQualification from "./ai-qualification"
 import DataQuality from "./data-quality"
 import ReportingDashboard from "./reporting-dashboard"
 import WorkflowOrchestrator from "./workflow-orchestrator"
+import ScrapingDebugger from "./scraping-debugger"
 
 export default function LeadGenerationDashboard() {
   const [activeTab, setActiveTab] = useState("workflow")
@@ -93,7 +94,7 @@ export default function LeadGenerationDashboard() {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="workflow" className="flex items-center gap-2">
               <Workflow className="h-4 w-4" />
               Workflow
@@ -101,6 +102,10 @@ export default function LeadGenerationDashboard() {
             <TabsTrigger value="scraping" className="flex items-center gap-2">
               <Database className="h-4 w-4" />
               Scraping
+            </TabsTrigger>
+            <TabsTrigger value="debug" className="flex items-center gap-2">
+              <Bug className="h-4 w-4" />
+              Debug
             </TabsTrigger>
             <TabsTrigger value="filters" className="flex items-center gap-2">
               <Filter className="h-4 w-4" />
@@ -150,6 +155,10 @@ export default function LeadGenerationDashboard() {
 
           <TabsContent value="reports">
             <ReportingDashboard />
+          </TabsContent>
+
+          <TabsContent value="debug">
+            <ScrapingDebugger />
           </TabsContent>
         </Tabs>
       </div>
