@@ -862,13 +862,13 @@ export default function SmartScrapingEngine() {
                       <div className="h-40 bg-gray-100 rounded flex items-center justify-center">
                         <p className="text-sm text-muted-foreground">Chart visualization would appear here</p>
                       </div>
-                    ))}
+                    </div>
+                  ))}
                   </div>
-                </div>
 
                 {/* Recommendations */}
                 <div className="bg-blue-50 p-6 rounded-xl">
-                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">t-lg font-semibold mb-4 flex items-center gap-2">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                     <Sparkles className="h-5 w-5 text-blue-600" />
                     AI Recommendations
                   </h3>
