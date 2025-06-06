@@ -45,5 +45,3 @@ const AlertTitle = React.forwardRef<React.ElementRef<"p">, React.ComponentPropsW
 AlertTitle.displayName = "AlertTitle"
 
 export { Alert, AlertTitle, AlertDescription }
-import { AlertTriangle } from "lucide-react"
-export { AlertTriangle }
