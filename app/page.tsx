@@ -1,5 +1,5 @@
-import LeadGenerationFilters from "../lead-generation-filters"
+import LeadGenerationDashboard from "../components/lead-generation-dashboard"
 
 export default function Page() {
-  return <LeadGenerationFilters />
+  return <LeadGenerationDashboard />
 }
