@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Play, Pause, Square, Globe, AlertCircle, CheckCircle, Clock } from "lucide-react"
+import { Play, Pause, Square, Globe, AlertCircle, CheckCircle, Clock, X, Download } from "lucide-react"
 
 interface ScrapingJob {
   id: string
@@ -68,6 +68,108 @@ export default function ScrapingEngine() {
   })
 
   const [isCreating, setIsCreating] = useState(false)
+
+  const [selectedJob, setSelectedJob] = useState<string | null>(null)
+  const [extractedData, setExtractedData] = useState<any[]>([])
+  const [showJobDetails, setShowJobDetails] = useState(false)
+
+  const mockExtractedData = {
+    "1": [
+      {
+        id: "lead_001",
+        companyName: "TechCorp Solutions",
+        industry: "Technology",
+        employees: 250,
+        revenue: 15000000,
+        location: "San Francisco, CA",
+        website: "techcorp.com",
+        contactEmail: "contact@techcorp.com",
+        description: "Leading provider of cloud-based software solutions",
+        extractedAt: new Date("2024-01-15T10:30:00"),
+      },
+      {
+        id: "lead_002",
+        companyName: "DataFlow Systems",
+        industry: "Technology",
+        employees: 180,
+        revenue: 12500000,
+        location: "San Francisco, CA",
+        website: "dataflow.com",
+        contactEmail: "info@dataflow.com",
+        description: "Enterprise data analytics and visualization platform",
+        extractedAt: new Date("2024-01-15T10:45:00"),
+      },
+      // Add more mock data...
+    ],
+    "2": [
+      {
+        id: "lead_003",
+        companyName: "HealthTech Dynamics",
+        industry: "Healthcare",
+        employees: 450,
+        revenue: 32000000,
+        location: "Boston, MA",
+        website: "healthtech.com",
+        contactEmail: "hello@healthtech.com",
+        description: "AI-driven diagnostic tools and telemedicine platforms",
+        extractedAt: new Date("2024-01-14T14:20:00"),
+      },
+      // Add more healthcare leads...
+    ],
+  }
+
+  const handleViewJobData = (jobId: string) => {
+    setSelectedJob(jobId)
+    setExtractedData(mockExtractedData[jobId] || [])
+    setShowJobDetails(true)
+  }
+
+  const handleDownloadData = (format: "csv" | "excel" | "json") => {
+    if (!extractedData.length) return
+
+    let content = ""
+    let filename = `scraped_data_${selectedJob}.${format}`
+    let mimeType = ""
+
+    switch (format) {
+      case "csv":
+        const headers = Object.keys(extractedData[0]).join(",")
+        const rows = extractedData.map((row) =>
+          Object.values(row)
+            .map((value) => (typeof value === "string" ? `"${value}"` : value))
+            .join(","),
+        )
+        content = [headers, ...rows].join("\n")
+        mimeType = "text/csv"
+        break
+
+      case "json":
+        content = JSON.stringify(extractedData, null, 2)
+        mimeType = "application/json"
+        break
+
+      case "excel":
+        // For demo purposes, we'll export as CSV with .xlsx extension
+        const excelHeaders = Object.keys(extractedData[0]).join(",")
+        const excelRows = extractedData.map((row) =>
+          Object.values(row)
+            .map((value) => (typeof value === "string" ? `"${value}"` : value))
+            .join(","),
+        )
+        content = [excelHeaders, ...excelRows].join("\n")
+        mimeType = "text/csv"
+        filename = `scraped_data_${selectedJob}.csv`
+        break
+    }
+
+    const blob = new Blob([content], { type: mimeType })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = filename
+    a.click()
+    window.URL.revokeObjectURL(url)
+  }
 
   const handleStartJob = () => {
     setIsCreating(true)
@@ -322,7 +424,16 @@ export default function ScrapingEngine() {
                   <div className="flex items-center gap-3">
                     {getStatusIcon(job.status)}
                     <div>
-                      <h3 className="font-semibold">{job.name}</h3>
+                      {job.status === "completed" ? (
+                        <button
+                          onClick={() => handleViewJobData(job.id)}
+                          className="font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                        >
+                          {job.name}
+                        </button>
+                      ) : (
+                        <h3 className="font-semibold">{job.name}</h3>
+                      )}
                       <p className="text-sm text-muted-foreground">Started {job.startTime.toLocaleTimeString()}</p>
                     </div>
                   </div>
@@ -370,6 +481,81 @@ export default function ScrapingEngine() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Job Details Modal */}
+      {showJobDetails && selectedJob && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-6xl max-h-[90vh] overflow-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">Scraped Data - {jobs.find((j) => j.id === selectedJob)?.name}</h2>
+              <button onClick={() => setShowJobDetails(false)} className="text-gray-500 hover:text-gray-700">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="mb-4 flex gap-2">
+              <Button onClick={() => handleDownloadData("csv")} variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Download CSV
+              </Button>
+              <Button onClick={() => handleDownloadData("excel")} variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Download Excel
+              </Button>
+              <Button onClick={() => handleDownloadData("json")} variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Download JSON
+              </Button>
+            </div>
+
+            <div className="border rounded-lg overflow-hidden">
+              <div className="bg-gray-50 p-3 border-b">
+                <p className="text-sm text-gray-600">{extractedData.length} leads extracted</p>
+              </div>
+
+              <div className="overflow-x-auto max-h-96">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-100 sticky top-0">
+                    <tr>
+                      <th className="p-2 text-left">Company</th>
+                      <th className="p-2 text-left">Industry</th>
+                      <th className="p-2 text-left">Employees</th>
+                      <th className="p-2 text-left">Revenue</th>
+                      <th className="p-2 text-left">Location</th>
+                      <th className="p-2 text-left">Website</th>
+                      <th className="p-2 text-left">Contact</th>
+                      <th className="p-2 text-left">Extracted</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {extractedData.map((lead, index) => (
+                      <tr key={lead.id} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                        <td className="p-2 font-medium">{lead.companyName}</td>
+                        <td className="p-2">{lead.industry}</td>
+                        <td className="p-2">{lead.employees?.toLocaleString()}</td>
+                        <td className="p-2">${(lead.revenue / 1000000).toFixed(1)}M</td>
+                        <td className="p-2">{lead.location}</td>
+                        <td className="p-2">
+                          <a
+                            href={`https://${lead.website}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline"
+                          >
+                            {lead.website}
+                          </a>
+                        </td>
+                        <td className="p-2">{lead.contactEmail}</td>
+                        <td className="p-2">{lead.extractedAt?.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
